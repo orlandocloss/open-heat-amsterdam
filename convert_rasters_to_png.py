@@ -123,8 +123,7 @@ def convert_raster_to_png(input_path: Path, output_dir: Path, year: int):
 
 def main():
     input_dir = Path(__file__).parent / "cleaned"
-    output_dir = Path(__file__).parent / "public"
-    output_dir.mkdir(exist_ok=True)
+    output_dir = Path(__file__).parent  # Save to root for Vercel
     
     metadata = {}
     
@@ -138,7 +137,7 @@ def main():
         }
     
     # Save metadata JSON
-    metadata_path = output_dir / 'dlst_metadata.json'
+    metadata_path = Path(__file__).parent / 'dlst_metadata.json'
     with open(metadata_path, 'w') as f:
         json.dump(metadata, f, indent=2)
     print(f"\nSaved metadata: {metadata_path}")

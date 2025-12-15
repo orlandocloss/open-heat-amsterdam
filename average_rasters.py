@@ -33,19 +33,28 @@ def average_rasters_by_year(input_dir: Path, output_dir: Path, year: int):
             arrays.append(src.read(1))  # Read first band
     
     # Stack arrays and compute mean, ignoring nodata values
-    stacked = np.stack(arrays, axis=0)
+    stacked = np.stack(arrays, axis=0).astype(np.float32)
     
     # Get nodata value from profile
     nodata = profile.get('nodata', -9999)
     
-    # Create masked array to handle nodata
-    masked = np.ma.masked_equal(stacked, nodata)
+    # Replace nodata with NaN for proper averaging
+    stacked = np.where(stacked == nodata, np.nan, stacked)
     
-    # Calculate mean across the stack (axis 0)
-    averaged = np.ma.mean(masked, axis=0).filled(nodata)
+    # Also handle any existing NaN values
+    # Calculate mean across the stack (axis 0), ignoring NaN values
+    with np.errstate(all='ignore'):  # Suppress warnings for all-NaN slices
+        averaged = np.nanmean(stacked, axis=0)
+    
+    # Count how many valid values contributed to each pixel
+    valid_counts = np.sum(~np.isnan(stacked), axis=0)
+    print(f"  Pixel coverage: min={valid_counts.min()}, max={valid_counts.max()} months")
+    
+    # Keep NaN as the nodata value for output
+    nodata = np.nan
     
     # Update profile for output
-    profile.update(dtype=rasterio.float32)
+    profile.update(dtype=rasterio.float32, nodata=np.nan)
     
     # Write output
     output_path = output_dir / f"DLST_{year}_average.tif"
