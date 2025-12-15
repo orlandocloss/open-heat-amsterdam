@@ -507,11 +507,14 @@ body {
     color: #333;
 }
 
-/* Feature Sections (Regional & LST) */
+/* Feature Sections (Regional & LST) - Stand out from config */
 .feature-section {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid #3a3a3a;
 }
 
 .feature-buttons {
@@ -520,11 +523,12 @@ body {
     gap: 8px;
 }
 
-.feature-btn {
+/* Regional Button - Warm theme */
+.regional-btn {
     padding: 14px 16px;
-    background: #0a0a0a;
-    color: #FFD700;
-    border: 2px solid #FFD700;
+    background: linear-gradient(180deg, #2a1a0a 0%, #1a0a0a 100%);
+    color: #FF8C00;
+    border: 2px solid #FF8C00;
     border-radius: 0;
     font-size: 12px;
     font-weight: 600;
@@ -533,12 +537,34 @@ body {
     letter-spacing: 1px;
     text-transform: uppercase;
     font-family: 'Courier New', monospace;
-    box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
+    box-shadow: 0 0 12px rgba(255, 140, 0, 0.3), inset 0 0 20px rgba(255, 140, 0, 0.1);
 }
 
-.feature-btn:hover {
-    background: #1a1a1a;
-    box-shadow: 0 0 16px rgba(255, 215, 0, 0.4);
+.regional-btn:hover {
+    background: linear-gradient(180deg, #3a2a1a 0%, #2a1a0a 100%);
+    box-shadow: 0 0 20px rgba(255, 140, 0, 0.5), inset 0 0 30px rgba(255, 140, 0, 0.15);
+}
+
+/* LST Buttons - Cool theme */
+.lst-btn {
+    padding: 14px 16px;
+    background: linear-gradient(180deg, #0a1a2a 0%, #0a0a1a 100%);
+    color: #00ccff;
+    border: 2px solid #00ccff;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+    box-shadow: 0 0 12px rgba(0, 204, 255, 0.3), inset 0 0 20px rgba(0, 204, 255, 0.1);
+}
+
+.lst-btn:hover {
+    background: linear-gradient(180deg, #1a2a3a 0%, #0a1a2a 100%);
+    box-shadow: 0 0 20px rgba(0, 204, 255, 0.5), inset 0 0 30px rgba(0, 204, 255, 0.15);
 }
 
 /* Regional Heatmap Button */
