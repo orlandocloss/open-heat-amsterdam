@@ -294,11 +294,8 @@ function setupPanel() {
     elements.applyBtn.addEventListener('click', applyHeatmap);
     elements.backBtn.addEventListener('click', showHeatmapView);
     
-    // Regional heatmap checkbox
-    document.getElementById('show-regional-heatmap').addEventListener('change', toggleRegionalHeatmap);
-    
-    // DLST overlay buttons
-    setupDlstButtons();
+    // Setup overlay controls (regional heatmap + DLST)
+    setupOverlayControls();
 }
 
 function showHeatmapView() {
@@ -708,26 +705,73 @@ function showBuildingInfo(building) {
 }
 
 // ============================================================================
-// REGIONAL HEATMAP BY NEIGHBORHOOD
+// OVERLAY CONTROLS (Regional Heatmap + DLST)
 // ============================================================================
 
 /**
- * Toggle regional heatmap overlay showing mean scores by neighborhood
+ * Setup all overlay button controls and opacity sliders
  */
-function toggleRegionalHeatmap(e) {
-    const checked = e.target.checked;
+function setupOverlayControls() {
+    // Regional heatmap button
+    const regionalBtn = document.getElementById('regional-heatmap-btn');
+    if (regionalBtn) {
+        regionalBtn.addEventListener('click', toggleRegionalHeatmap);
+    }
     
-    if (checked) {
-        // Show regional heatmap
-        createRegionalHeatmap();
-        state.regionalHeatmapEnabled = true;
-    } else {
-        // Remove regional heatmap
+    // Regional opacity slider
+    const regionalOpacity = document.getElementById('regional-opacity');
+    if (regionalOpacity) {
+        regionalOpacity.addEventListener('input', (e) => {
+            const opacity = parseFloat(e.target.value);
+            document.getElementById('regional-opacity-value').textContent = `${Math.round(opacity * 100)}%`;
+            if (state.regionalHeatmapLayer) {
+                state.regionalHeatmapLayer.setStyle({ fillOpacity: opacity });
+            }
+        });
+    }
+    
+    // DLST buttons
+    const btn2024 = document.getElementById('dlst-2024-btn');
+    const btn2025 = document.getElementById('dlst-2025-btn');
+    if (btn2024) btn2024.addEventListener('click', () => toggleDlstOverlay(2024));
+    if (btn2025) btn2025.addEventListener('click', () => toggleDlstOverlay(2025));
+    
+    // DLST opacity slider
+    const dlstOpacity = document.getElementById('dlst-opacity');
+    if (dlstOpacity) {
+        dlstOpacity.addEventListener('input', (e) => {
+            const opacity = parseFloat(e.target.value);
+            document.getElementById('dlst-opacity-value').textContent = `${Math.round(opacity * 100)}%`;
+            if (state.activeDlstYear && state.dlstOverlays[state.activeDlstYear]) {
+                state.dlstOverlays[state.activeDlstYear].setOpacity(opacity);
+            }
+        });
+    }
+}
+
+// ============================================================================
+// REGIONAL HEATMAP
+// ============================================================================
+
+/**
+ * Toggle regional heatmap overlay
+ */
+function toggleRegionalHeatmap() {
+    const btn = document.getElementById('regional-heatmap-btn');
+    const opacityContainer = document.getElementById('regional-opacity-container');
+    
+    if (state.regionalHeatmapEnabled) {
+        // Turn off
         if (state.regionalHeatmapLayer) {
             state.map.removeLayer(state.regionalHeatmapLayer);
             state.regionalHeatmapLayer = null;
         }
         state.regionalHeatmapEnabled = false;
+        btn.classList.remove('active');
+        opacityContainer.classList.add('hidden');
+    } else {
+        // Turn on
+        createRegionalHeatmap();
     }
 }
 
@@ -735,9 +779,11 @@ function toggleRegionalHeatmap(e) {
  * Create regional heatmap showing mean scores by neighborhood
  */
 async function createRegionalHeatmap() {
+    const btn = document.getElementById('regional-heatmap-btn');
+    const opacityContainer = document.getElementById('regional-opacity-container');
+    
     if (!state.heatmapEnabled) {
         alert('Please apply building heatmap weights first');
-        document.getElementById('show-regional-heatmap').checked = false;
         return;
     }
     
@@ -747,129 +793,103 @@ async function createRegionalHeatmap() {
         await loadNeighborhoodsGeoJSON();
         if (!neighborhoodsGeoJSON) {
             alert('Failed to load neighborhood boundaries');
-            document.getElementById('show-regional-heatmap').checked = false;
             return;
         }
     }
     
-    // Group buildings by neighborhood and calculate average score
-    const neighborhoodScores = new Map();
+    // Calculate scores for each GeoJSON neighborhood
+    const geoJSONScores = calculateNeighborhoodScores();
     
-    state.buildingLayers.forEach(({ building }) => {
-        const neighborhood = building.neighborhood || 'Unknown';
-        const score = calculateBuildingScore(building);
-        
-        if (!neighborhoodScores.has(neighborhood)) {
-            neighborhoodScores.set(neighborhood, {
-                scores: [],
-                count: 0
-            });
-        }
-        
-        neighborhoodScores.get(neighborhood).scores.push(score);
-        neighborhoodScores.get(neighborhood).count++;
-    });
+    // Get current opacity setting
+    const opacity = parseFloat(document.getElementById('regional-opacity').value);
     
-    // Calculate mean scores
-    const meanScores = new Map();
-    neighborhoodScores.forEach((data, neighborhood) => {
-        const meanScore = data.scores.reduce((a, b) => a + b, 0) / data.scores.length;
-        meanScores.set(neighborhood, meanScore);
-        console.log(`${neighborhood}: mean score ${meanScore.toFixed(3)} (${data.count} buildings)`);
-    });
+    // Create neighborhood polygon layer
+    state.regionalHeatmapLayer = L.geoJSON(neighborhoodsGeoJSON, {
+        style: (feature) => getRegionalStyle(feature, geoJSONScores, opacity),
+        onEachFeature: (feature, layer) => bindRegionalPopup(feature, layer, geoJSONScores)
+    }).addTo(state.map);
     
-    console.log(`\nRegional heatmap: ${neighborhoodScores.size} neighborhoods with data`);
+    state.regionalHeatmapEnabled = true;
+    btn.classList.add('active');
+    opacityContainer.classList.remove('hidden');
     
-    // Calculate score for each GeoJSON neighborhood by spatial aggregation
-    const geoJSONScores = new Map();
+    console.log(`Regional heatmap: ${geoJSONScores.size} neighborhoods with data`);
+}
+
+/**
+ * Calculate scores for each neighborhood
+ */
+function calculateNeighborhoodScores() {
+    const scores = new Map();
     
     neighborhoodsGeoJSON.features.forEach(feature => {
         const buurtcode = feature.properties.Buurtcode;
         const buurtnaam = feature.properties.Buurtnaam;
-        
-        // Find all buildings within this GeoJSON neighborhood's bounds
         const bounds = L.geoJSON(feature).getBounds();
-        const buildingsInNeighborhood = [];
         
-        state.buildingLayers.forEach(({ building }) => {
-            // Simple bounding box check
-            if (building.latitude >= bounds.getSouth() && 
-                building.latitude <= bounds.getNorth() &&
-                building.longitude >= bounds.getWest() && 
-                building.longitude <= bounds.getEast()) {
-                buildingsInNeighborhood.push(building);
-            }
-        });
+        // Find buildings within bounds
+        const buildings = state.buildingLayers.filter(({ building }) => 
+            building.latitude >= bounds.getSouth() && 
+            building.latitude <= bounds.getNorth() &&
+            building.longitude >= bounds.getWest() && 
+            building.longitude <= bounds.getEast()
+        );
         
-        if (buildingsInNeighborhood.length > 0) {
-            const scores = buildingsInNeighborhood.map(calculateBuildingScore);
-            const meanScore = scores.reduce((a, b) => a + b, 0) / scores.length;
-            geoJSONScores.set(buurtcode, {
-                score: meanScore,
-                count: buildingsInNeighborhood.length,
-                name: buurtnaam
-            });
+        if (buildings.length > 0) {
+            const buildingScores = buildings.map(({ building }) => calculateBuildingScore(building));
+            const meanScore = buildingScores.reduce((a, b) => a + b, 0) / buildingScores.length;
+            scores.set(buurtcode, { score: meanScore, count: buildings.length, name: buurtnaam });
         }
     });
     
-    console.log(`Matched ${geoJSONScores.size} GeoJSON neighborhoods with building data`);
-    
-    // Create neighborhood polygon layer
-    state.regionalHeatmapLayer = L.geoJSON(neighborhoodsGeoJSON, {
-        style: (feature) => {
-            const buurtcode = feature.properties.Buurtcode;
-            const data = geoJSONScores.get(buurtcode);
-            
-            if (data) {
-                // Has buildings - solid color by mean score (hides buildings)
-                const color = getHeatColor(data.score);
-                
-                return {
-                    fillColor: color,
-                    fillOpacity: 1.0,  // Solid fill
-                    color: '#333',
-                    weight: 2
-                };
-            } else {
-                // No buildings - light gray fill
-                return {
-                    fillColor: '#e0e0e0',
-                    fillOpacity: 0.4,
-                    color: '#999',
-                    weight: 1
-                };
-            }
-        },
-        onEachFeature: (feature, layer) => {
-            const buurtcode = feature.properties.Buurtcode;
-            const buurtnaam = feature.properties.Buurtnaam;
-            const data = geoJSONScores.get(buurtcode);
-            
-            if (data) {
-                layer.bindPopup(`
-                    <div style="font-family: Courier New; padding: 10px;">
-                        <strong style="color: #FFD700; text-transform: uppercase;">${buurtnaam}</strong><br>
-                        <span style="color: #666;">Mean Score:</span> <strong style="color: #FF8C00;">${data.score.toFixed(3)}</strong><br>
-                        <span style="color: #666;">Buildings:</span> <strong style="color: #FF8C00;">${data.count}</strong>
-                    </div>
-                `);
-            } else {
-                layer.bindPopup(`
-                    <div style="font-family: Courier New; padding: 10px;">
-                        <strong style="color: #999; text-transform: uppercase;">${buurtnaam}</strong><br>
-                        <span style="color: #666;">No building data</span>
-                    </div>
-                `);
-            }
-        }
-    }).addTo(state.map);
-    
-    // Regional layer should be on top - don't bring buildings to front
-    console.log('Regional heatmap layer added on top');
+    return scores;
 }
 
 /**
- * Calculate weighted score for a building using binary filters
+ * Get style for regional heatmap feature
+ */
+function getRegionalStyle(feature, scores, opacity) {
+    const data = scores.get(feature.properties.Buurtcode);
+    
+    if (data) {
+        return {
+            fillColor: getHeatColor(data.score),
+            fillOpacity: opacity,
+            color: '#333',
+            weight: 2
+        };
+    }
+    return {
+        fillColor: '#e0e0e0',
+        fillOpacity: opacity * 0.4,
+        color: '#999',
+        weight: 1
+    };
+}
+
+/**
+ * Bind popup to regional feature
+ */
+function bindRegionalPopup(feature, layer, scores) {
+    const data = scores.get(feature.properties.Buurtcode);
+    const name = feature.properties.Buurtnaam;
+    
+    const content = data
+        ? `<div style="font-family: Courier New; padding: 10px;">
+            <strong style="color: #FFD700; text-transform: uppercase;">${name}</strong><br>
+            <span style="color: #666;">Mean Score:</span> <strong style="color: #FF8C00;">${data.score.toFixed(3)}</strong><br>
+            <span style="color: #666;">Buildings:</span> <strong style="color: #FF8C00;">${data.count}</strong>
+           </div>`
+        : `<div style="font-family: Courier New; padding: 10px;">
+            <strong style="color: #999; text-transform: uppercase;">${name}</strong><br>
+            <span style="color: #666;">No building data</span>
+           </div>`;
+    
+    layer.bindPopup(content);
+}
+
+/**
+ * Calculate weighted score for a building
  */
 function calculateBuildingScore(building) {
     const energyScore = matchesEnergyCriteria(building) ? 1.0 : 0.0;
@@ -941,40 +961,25 @@ function parseCoordinateString(str) {
 // DLST (LAND SURFACE TEMPERATURE) OVERLAY
 // ============================================================================
 
-/**
- * DLST bounds in WGS84 (same for both years)
- */
+/** DLST bounds in WGS84 (same for both years) */
 const DLST_BOUNDS = [
-    [52.24607426809743, 4.685825351769769],  // Southwest [lat, lng]
+    [52.24607426809743, 4.685825351769769],   // Southwest [lat, lng]
     [52.462172688706374, 5.1180221929876595]  // Northeast [lat, lng]
 ];
-
-/**
- * Setup DLST toggle buttons
- */
-function setupDlstButtons() {
-    const btn2024 = document.getElementById('dlst-2024-btn');
-    const btn2025 = document.getElementById('dlst-2025-btn');
-    
-    if (btn2024) {
-        btn2024.addEventListener('click', () => toggleDlstOverlay(2024));
-    }
-    if (btn2025) {
-        btn2025.addEventListener('click', () => toggleDlstOverlay(2025));
-    }
-}
 
 /**
  * Toggle DLST overlay for a given year
  */
 function toggleDlstOverlay(year) {
     const btn = document.getElementById(`dlst-${year}-btn`);
+    const opacityContainer = document.getElementById('dlst-opacity-container');
     
     // If this year is already active, turn it off
     if (state.activeDlstYear === year) {
         removeDlstOverlay(year);
         state.activeDlstYear = null;
         btn.classList.remove('active');
+        opacityContainer.classList.add('hidden');
         return;
     }
     
@@ -988,32 +993,32 @@ function toggleDlstOverlay(year) {
     addDlstOverlay(year);
     state.activeDlstYear = year;
     btn.classList.add('active');
+    opacityContainer.classList.remove('hidden');
 }
 
 /**
  * Add DLST image overlay to map
  */
 function addDlstOverlay(year) {
+    const opacity = parseFloat(document.getElementById('dlst-opacity').value);
+    
     if (state.dlstOverlays[year]) {
-        // Already loaded, just add to map
+        // Already loaded, just add to map and update opacity
+        state.dlstOverlays[year].setOpacity(opacity);
         state.dlstOverlays[year].addTo(state.map);
         state.dlstOverlays[year].bringToFront();
         return;
     }
     
     // Create image overlay
-    const imageUrl = `/dlst_${year}.png`;
-    
-    const overlay = L.imageOverlay(imageUrl, DLST_BOUNDS, {
-        opacity: 0.7,
+    const overlay = L.imageOverlay(`/dlst_${year}.png`, DLST_BOUNDS, {
+        opacity: opacity,
         interactive: false,
-        zIndex: 650  // Above buildings (400) but below popups
+        zIndex: 650
     });
     
     overlay.addTo(state.map);
     overlay.bringToFront();
-    
-    // Store reference
     state.dlstOverlays[year] = overlay;
     
     console.log(`DLST ${year} overlay added`);
