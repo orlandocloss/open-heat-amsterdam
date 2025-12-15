@@ -93,32 +93,26 @@
             
             <button id="apply-heatmap" class="apply-btn">Apply</button>
             
-            <!-- Overlay Controls -->
-            <div class="control-section overlay-section">
-                <label class="control-label">Overlays</label>
-                
-                <!-- Regional Heatmap -->
-                <div class="overlay-group">
-                    <button id="regional-heatmap-btn" class="overlay-btn">Regional</button>
-                    <div id="regional-opacity-container" class="opacity-container hidden">
-                        <input type="range" id="regional-opacity" min="0" max="1" step="0.05" value="0.7" class="slider opacity-slider">
-                        <span id="regional-opacity-value" class="opacity-value">70%</span>
-                    </div>
+            <!-- Regional Heatmap -->
+            <div class="feature-section">
+                <button id="regional-heatmap-btn" class="feature-btn regional-btn">Regional Heatmap</button>
+                <div id="regional-opacity-container" class="opacity-container hidden">
+                    <input type="range" id="regional-opacity" min="0" max="1" step="0.05" value="0.7" class="slider opacity-slider">
+                    <span id="regional-opacity-value" class="opacity-value">70%</span>
                 </div>
-                
-                <!-- Land Surface Temperature -->
-                <div class="overlay-group">
-                    <div class="overlay-buttons">
-                        <button id="dlst-2024-btn" class="overlay-btn" data-year="2024">LST 2024</button>
-                        <button id="dlst-2025-btn" class="overlay-btn" data-year="2025">LST 2025</button>
-                    </div>
-                    <div id="dlst-opacity-container" class="opacity-container hidden">
-                        <input type="range" id="dlst-opacity" min="0" max="1" step="0.05" value="0.7" class="slider opacity-slider">
-                        <span id="dlst-opacity-value" class="opacity-value">70%</span>
-                    </div>
+            </div>
+            
+            <!-- Land Surface Temperature -->
+            <div class="feature-section">
+                <div class="feature-buttons">
+                    <button id="dlst-2024-btn" class="feature-btn lst-btn" data-year="2024">LST 2024</button>
+                    <button id="dlst-2025-btn" class="feature-btn lst-btn" data-year="2025">LST 2025</button>
                 </div>
-                
-                <p class="help-text">LST: Average summer temperature (May-Sep)</p>
+                <div id="dlst-opacity-container" class="opacity-container hidden">
+                    <input type="range" id="dlst-opacity" min="0" max="1" step="0.05" value="0.7" class="slider opacity-slider">
+                    <span id="dlst-opacity-value" class="opacity-value">70%</span>
+                </div>
+                <p class="help-text">Average summer temperature (May-Sep)</p>
             </div>
         </div>
         
