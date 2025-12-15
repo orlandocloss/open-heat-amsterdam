@@ -700,3 +700,46 @@ body {
     font-weight: 400;
 }
 
+/* DLST Temperature Overlay Buttons */
+.dlst-section {
+    margin-top: 8px;
+}
+
+.dlst-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.dlst-btn {
+    padding: 10px;
+    background: #2a2a2a;
+    color: #888;
+    border: 2px solid #3a3a3a;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+}
+
+.dlst-btn:hover {
+    border-color: #FFD700;
+    color: #FFD700;
+}
+
+.dlst-btn.active {
+    background: linear-gradient(135deg, #0066cc 0%, #00ccff 50%, #ffff00 75%, #ff6600 100%);
+    border-color: #FFD700;
+    color: #0a0a0a;
+    font-weight: 600;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+}
+
+.dlst-btn.active:hover {
+    box-shadow: 0 0 16px rgba(255, 215, 0, 0.6);
+}
+

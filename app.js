@@ -58,7 +58,12 @@ const state = {
     yearValue: 1900,
     yearWeight: 0.33,
     
-    busyRoadWeight: 0.33
+    busyRoadWeight: 0.33,
+    
+    // DLST overlay state
+    dlstOverlays: {},
+    activeDlstYear: null,
+    dlstMetadata: null
 };
 
 
@@ -291,6 +296,9 @@ function setupPanel() {
     
     // Regional heatmap checkbox
     document.getElementById('show-regional-heatmap').addEventListener('change', toggleRegionalHeatmap);
+    
+    // DLST overlay buttons
+    setupDlstButtons();
 }
 
 function showHeatmapView() {
@@ -927,6 +935,98 @@ function parseCoordinateString(str) {
         const [lon, lat] = coord.trim().split(' ');
         return [parseFloat(lon), parseFloat(lat)];
     });
+}
+
+// ============================================================================
+// DLST (LAND SURFACE TEMPERATURE) OVERLAY
+// ============================================================================
+
+/**
+ * DLST bounds in WGS84 (same for both years)
+ */
+const DLST_BOUNDS = [
+    [52.24607426809743, 4.685825351769769],  // Southwest [lat, lng]
+    [52.462172688706374, 5.1180221929876595]  // Northeast [lat, lng]
+];
+
+/**
+ * Setup DLST toggle buttons
+ */
+function setupDlstButtons() {
+    const btn2024 = document.getElementById('dlst-2024-btn');
+    const btn2025 = document.getElementById('dlst-2025-btn');
+    
+    if (btn2024) {
+        btn2024.addEventListener('click', () => toggleDlstOverlay(2024));
+    }
+    if (btn2025) {
+        btn2025.addEventListener('click', () => toggleDlstOverlay(2025));
+    }
+}
+
+/**
+ * Toggle DLST overlay for a given year
+ */
+function toggleDlstOverlay(year) {
+    const btn = document.getElementById(`dlst-${year}-btn`);
+    
+    // If this year is already active, turn it off
+    if (state.activeDlstYear === year) {
+        removeDlstOverlay(year);
+        state.activeDlstYear = null;
+        btn.classList.remove('active');
+        return;
+    }
+    
+    // Remove any existing overlay
+    if (state.activeDlstYear !== null) {
+        removeDlstOverlay(state.activeDlstYear);
+        document.getElementById(`dlst-${state.activeDlstYear}-btn`).classList.remove('active');
+    }
+    
+    // Add new overlay
+    addDlstOverlay(year);
+    state.activeDlstYear = year;
+    btn.classList.add('active');
+}
+
+/**
+ * Add DLST image overlay to map
+ */
+function addDlstOverlay(year) {
+    if (state.dlstOverlays[year]) {
+        // Already loaded, just add to map
+        state.dlstOverlays[year].addTo(state.map);
+        state.dlstOverlays[year].bringToFront();
+        return;
+    }
+    
+    // Create image overlay
+    const imageUrl = `/public/dlst_${year}.png`;
+    
+    const overlay = L.imageOverlay(imageUrl, DLST_BOUNDS, {
+        opacity: 0.7,
+        interactive: false,
+        zIndex: 650  // Above buildings (400) but below popups
+    });
+    
+    overlay.addTo(state.map);
+    overlay.bringToFront();
+    
+    // Store reference
+    state.dlstOverlays[year] = overlay;
+    
+    console.log(`DLST ${year} overlay added`);
+}
+
+/**
+ * Remove DLST overlay from map
+ */
+function removeDlstOverlay(year) {
+    if (state.dlstOverlays[year]) {
+        state.map.removeLayer(state.dlstOverlays[year]);
+        console.log(`DLST ${year} overlay removed`);
+    }
 }
 
 // ============================================================================
