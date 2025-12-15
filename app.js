@@ -1002,7 +1002,7 @@ function addDlstOverlay(year) {
     }
     
     // Create image overlay
-    const imageUrl = `/public/dlst_${year}.png`;
+    const imageUrl = `/dlst_${year}.png`;
     
     const overlay = L.imageOverlay(imageUrl, DLST_BOUNDS, {
         opacity: 0.7,
