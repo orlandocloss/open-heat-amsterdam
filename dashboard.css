@@ -446,6 +446,16 @@ body {
     color: #FFD700;
 }
 
+.config-intro .text-regional {
+    color: #FF8C00;
+    font-weight: 600;
+}
+
+.config-intro .text-lst {
+    color: #00ccff;
+    font-weight: 600;
+}
+
 /* Help Text - More readable */
 .help-text {
     margin: 6px 0 0 0;
