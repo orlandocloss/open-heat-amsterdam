@@ -456,6 +456,12 @@ body {
     font-weight: 600;
 }
 
+/* Features intro - after Apply button */
+.features-intro {
+    margin-top: 16px;
+    border-left-color: #666;
+}
+
 /* Help Text - More readable */
 .help-text {
     margin: 6px 0 0 0;
@@ -665,37 +671,39 @@ body {
 }
 
 .building-summary {
-    background: #1a1a1a;
-    border: 2px solid #2a2a2a;
-    padding: 12px;
+    background: linear-gradient(180deg, #1a1a0a 0%, #1a1a1a 100%);
+    border: 2px solid #FFD700;
+    padding: 16px;
     border-radius: 0;
     display: grid;
-    gap: 6px;
+    gap: 8px;
+    box-shadow: 0 0 16px rgba(255, 215, 0, 0.2), inset 0 0 30px rgba(255, 215, 0, 0.05);
 }
 
 .building-summary h3 {
-    margin: 0 0 6px 0;
-    padding-bottom: 6px;
-    border-bottom: 2px solid #2a2a2a;
-    font-size: 12px;
+    margin: 0 0 8px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #FFD700;
+    font-size: 14px;
     color: #FFD700;
-    font-weight: 400;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
 }
 
 .building-summary .summary-stat {
-    font-size: 11px;
-    color: #aaa;
+    font-size: 12px;
+    color: #ccc;
     display: grid;
     grid-template-columns: 1fr auto;
     text-transform: uppercase;
     letter-spacing: 1px;
+    padding: 4px 0;
 }
 
 .building-summary .summary-stat strong {
     color: #FFD700;
-    font-weight: 400;
+    font-weight: 500;
 }
 
 .building-summary .summary-stat strong::after {
@@ -704,12 +712,16 @@ body {
 
 .building-summary .summary-stat span {
     color: #FF8C00;
+    font-weight: 600;
 }
 
 .addresses-list {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #2a2a2a;
 }
 
 .address-card {
