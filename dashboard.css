@@ -251,8 +251,8 @@ body {
 
 .config-intro p {
     margin: 0;
-    font-size: 12px;
-    color: var(--text-light);
+    font-size: 13px;
+    color: #ddd;
     line-height: 1.6;
 }
 
@@ -262,9 +262,6 @@ body {
 
 .features-intro {
     margin-top: 16px;
-    border-color: #555;
-    background: linear-gradient(135deg, #151515 0%, var(--dark-bg) 100%);
-    box-shadow: 0 0 8px rgba(100, 100, 100, 0.1);
 }
 
 /* ============================================================================
