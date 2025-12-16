@@ -9,6 +9,10 @@ AMS_3_col.csv
 *.csv
 *.svg
 
+# Python scripts (local data processing only)
+*.py
+cleaned/
+
 # Utility scripts
 add-neighborhoods.js
 export-to-svg.js
