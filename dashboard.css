@@ -291,6 +291,10 @@ body {
     font-size: 14px;
 }
 
+.control-label.weight-only {
+    justify-content: end;
+}
+
 .filter-row {
     display: grid;
     grid-template-columns: 80px 1fr;
