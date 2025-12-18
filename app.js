@@ -51,11 +51,12 @@ const state = {
     heatmapEnabled: false,
     energyOperator: '<=',
     energyValue: 'C',
-    energyWeight: 0.33,
+    energyWeight: 0.25,
     yearOperator: '<=',
     yearValue: 1900,
-    yearWeight: 0.33,
-    busyRoadWeight: 0.33,
+    yearWeight: 0.25,
+    busyRoadWeight: 0.25,
+    slopeWeight: 0.25,
     
     // Regional overlay
     regionalHeatmapEnabled: false,
@@ -263,6 +264,8 @@ function setupPanel() {
         yearWeightValue: document.getElementById('year-weight-value'),
         busyRoadWeight: document.getElementById('busy-road-weight'),
         busyRoadWeightValue: document.getElementById('busy-road-weight-value'),
+        slopeWeight: document.getElementById('slope-weight'),
+        slopeWeightValue: document.getElementById('slope-weight-value'),
         totalWeight: document.getElementById('total-weight'),
         warning: document.getElementById('weight-warning'),
         applyBtn: document.getElementById('apply-heatmap'),
@@ -277,12 +280,14 @@ function setupPanel() {
         state.yearValue = parseInt(els.yearValue.value);
         state.yearWeight = parseFloat(els.yearWeight.value);
         state.busyRoadWeight = parseFloat(els.busyRoadWeight.value);
+        state.slopeWeight = parseFloat(els.slopeWeight.value);
         
         els.energyWeightValue.textContent = state.energyWeight.toFixed(2);
         els.yearWeightValue.textContent = state.yearWeight.toFixed(2);
         els.busyRoadWeightValue.textContent = state.busyRoadWeight.toFixed(2);
+        els.slopeWeightValue.textContent = state.slopeWeight.toFixed(2);
         
-        const total = state.energyWeight + state.yearWeight + state.busyRoadWeight;
+        const total = state.energyWeight + state.yearWeight + state.busyRoadWeight + state.slopeWeight;
         els.totalWeight.textContent = total.toFixed(2);
         els.warning.classList.toggle('hidden', total <= 1.0);
         els.applyBtn.disabled = total > 1.0;
@@ -290,7 +295,7 @@ function setupPanel() {
     
     ['energyOperator', 'energyValue', 'yearOperator'].forEach(id => 
         els[id].addEventListener('change', updateWeights));
-    ['energyWeight', 'yearValue', 'yearWeight', 'busyRoadWeight'].forEach(id => 
+    ['energyWeight', 'yearValue', 'yearWeight', 'busyRoadWeight', 'slopeWeight'].forEach(id => 
         els[id].addEventListener('input', updateWeights));
     
     els.applyBtn.addEventListener('click', applyHeatmap);
@@ -340,10 +345,12 @@ function calculateBuildingScore(building) {
     const energyScore = matchesEnergyCriteria(building) ? 1.0 : 0.0;
     const yearScore = matchesYearCriteria(building) ? 1.0 : 0.0;
     const busyRoadScore = building.onBusyRoad ? 1.0 : 0.0;
+    const slopeScore = building.maxSlopeFactor || 0.5; // Already 0-1 range
     
     return (energyScore * state.energyWeight) + 
            (yearScore * state.yearWeight) + 
-           (busyRoadScore * state.busyRoadWeight);
+           (busyRoadScore * state.busyRoadWeight) +
+           (slopeScore * state.slopeWeight);
 }
 
 function matchesEnergyCriteria(building) {

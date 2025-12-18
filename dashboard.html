@@ -59,9 +59,9 @@
                     </select>
                 </div>
                 <label class="control-label">
-                    Weight <span id="energy-weight-value">0.33</span>
+                    Weight <span id="energy-weight-value">0.25</span>
                 </label>
-                <input type="range" id="energy-weight" min="0" max="1" step="0.01" value="0.33" class="slider">
+                <input type="range" id="energy-weight" min="0" max="1" step="0.01" value="0.25" class="slider">
                 <p class="help-text">Binary: matches criteria = 1.0, else 0.0</p>
             </div>
             
@@ -76,19 +76,28 @@
                     <input type="number" id="year-value" class="filter-input" value="1900" min="1600" max="2024">
                 </div>
                 <label class="control-label">
-                    Weight <span id="year-weight-value">0.33</span>
+                    Weight <span id="year-weight-value">0.25</span>
                 </label>
-                <input type="range" id="year-weight" min="0" max="1" step="0.01" value="0.33" class="slider">
+                <input type="range" id="year-weight" min="0" max="1" step="0.01" value="0.25" class="slider">
                 <p class="help-text">Binary: matches criteria = 1.0, else 0.0</p>
             </div>
             
             <!-- Busy Road Filter -->
             <div class="control-section">
                 <label class="control-label">
-                    Busy Road <span id="busy-road-weight-value">0.33</span>
+                    Busy Road <span id="busy-road-weight-value">0.25</span>
                 </label>
-                <input type="range" id="busy-road-weight" min="0" max="1" step="0.01" value="0.33" class="slider">
+                <input type="range" id="busy-road-weight" min="0" max="1" step="0.01" value="0.25" class="slider">
                 <p class="help-text">Binary: on busy road = 1.0, else 0.0</p>
+            </div>
+            
+            <!-- Slope Factor Filter -->
+            <div class="control-section">
+                <label class="control-label">
+                    Slope Factor <span id="slope-weight-value">0.25</span>
+                </label>
+                <input type="range" id="slope-weight" min="0" max="1" step="0.01" value="0.25" class="slider">
+                <p class="help-text">Roof slope: higher = more heat exposure (0-1)</p>
             </div>
             
             <div class="weight-summary">

@@ -44,13 +44,14 @@ module.exports = async (req, res) => {
                     energyLabel: row.Energielabel,
                     buildingYear: parseInt(row.Energielabels_Bouwjaar),
                     busyRoad: parseInt(row.busy_roads) === 1,
+                    slopeFactor: parseFloat(row.slope_factor) || 0.5,
                     neighborhood: row.neighborhood || 'Unknown',
                     latitude: parseFloat(row.latitude),
                     longitude: parseFloat(row.longitude)
                 };
                 
                 buildingsMap.set(polygonKey, {
-                    id: polygonKey.substring(0, 50), // Use polygon hash as ID
+                    id: polygonKey.substring(0, 50),
                     polygon: row.building_polygon_wkt,
                     latitude: firstAddr.latitude,
                     longitude: firstAddr.longitude,
@@ -59,7 +60,8 @@ module.exports = async (req, res) => {
                     // Aggregate data for heatmap
                     worstEnergyRank: getEnergyRank(firstAddr.energyLabel),
                     oldestYear: firstAddr.buildingYear,
-                    onBusyRoad: firstAddr.busyRoad
+                    onBusyRoad: firstAddr.busyRoad,
+                    maxSlopeFactor: firstAddr.slopeFactor
                 });
             }
             
@@ -79,6 +81,11 @@ module.exports = async (req, res) => {
             
             if (parseInt(row.busy_roads) === 1) {
                 building.onBusyRoad = true;
+            }
+            
+            const slopeFactor = parseFloat(row.slope_factor) || 0.5;
+            if (slopeFactor > building.maxSlopeFactor) {
+                building.maxSlopeFactor = slopeFactor;
             }
         });
         
