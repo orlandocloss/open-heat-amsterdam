@@ -57,6 +57,7 @@ module.exports = async (req, res) => {
                 busyRoad: parseInt(row.busy_roads) === 1,
                 slopeFactor: parseFloat(row.slope_factor) || null,
                 southFactor: parseFloat(row.south_factor) || null,
+                wwr: parseFloat(row.wwr) || null,
                 neighborhood: row.neighborhood || 'Unknown',
                 longitude: parseFloat(row.longitude),
                 latitude: parseFloat(row.latitude)

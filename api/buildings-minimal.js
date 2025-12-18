@@ -42,12 +42,14 @@ module.exports = async (req, res) => {
                 // Store minimal data per building
                 const slopeVal = parseFloat(row.slope_factor);
                 const southVal = parseFloat(row.south_factor);
+                const wwrVal = parseFloat(row.wwr);
                 const firstAddr = {
                     energyLabel: row.Energielabel,
                     buildingYear: parseInt(row.Energielabels_Bouwjaar),
                     busyRoad: parseInt(row.busy_roads) === 1,
                     slopeFactor: isNaN(slopeVal) ? null : slopeVal,
                     southFactor: isNaN(southVal) ? null : southVal,
+                    wwr: isNaN(wwrVal) ? null : wwrVal,
                     neighborhood: row.neighborhood || 'Unknown',
                     latitude: parseFloat(row.latitude),
                     longitude: parseFloat(row.longitude)
@@ -66,11 +68,13 @@ module.exports = async (req, res) => {
                     onBusyRoad: firstAddr.busyRoad,
                     maxSlopeFactor: firstAddr.slopeFactor,
                     maxSouthFactor: firstAddr.southFactor,
+                    maxWwr: firstAddr.wwr,
                     // Track missing data
                     missingEnergy: !firstAddr.energyLabel || firstAddr.energyLabel === '',
                     missingYear: isNaN(firstAddr.buildingYear),
                     missingSlope: firstAddr.slopeFactor === null,
-                    missingSouth: firstAddr.southFactor === null
+                    missingSouth: firstAddr.southFactor === null,
+                    missingWwr: firstAddr.wwr === null
                 });
             }
             
@@ -113,6 +117,14 @@ module.exports = async (req, res) => {
                     building.maxSouthFactor = southFactor;
                 }
                 building.missingSouth = false;
+            }
+            
+            const wwr = parseFloat(row.wwr);
+            if (!isNaN(wwr)) {
+                if (building.maxWwr === null || wwr > building.maxWwr) {
+                    building.maxWwr = wwr;
+                }
+                building.missingWwr = false;
             }
         });
         

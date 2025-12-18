@@ -94,19 +94,28 @@
             <!-- Slope Factor Filter -->
             <div class="control-section">
                 <label class="control-label">
-                    Slope Factor <span id="slope-weight-value">0.20</span>
+                    Slope Factor <span id="slope-weight-value">0.15</span>
                 </label>
-                <input type="range" id="slope-weight" min="0" max="1" step="0.01" value="0.20" class="slider">
+                <input type="range" id="slope-weight" min="0" max="1" step="0.01" value="0.15" class="slider">
                 <p class="help-text">Roof slope: higher = more heat exposure (0-1)</p>
             </div>
             
             <!-- South Factor Filter -->
             <div class="control-section">
                 <label class="control-label">
-                    South Factor <span id="south-weight-value">0.20</span>
+                    South Factor <span id="south-weight-value">0.15</span>
                 </label>
-                <input type="range" id="south-weight" min="0" max="1" step="0.01" value="0.20" class="slider">
+                <input type="range" id="south-weight" min="0" max="1" step="0.01" value="0.15" class="slider">
                 <p class="help-text">South-facing: higher = more sun exposure (0-1)</p>
+            </div>
+            
+            <!-- WWR Filter -->
+            <div class="control-section">
+                <label class="control-label">
+                    Window-Wall Ratio <span id="wwr-weight-value">0.15</span>
+                </label>
+                <input type="range" id="wwr-weight" min="0" max="1" step="0.01" value="0.15" class="slider">
+                <p class="help-text">Window to wall ratio (can exceed 1.0)</p>
             </div>
             
             <div class="weight-summary">
@@ -115,6 +124,8 @@
             </div>
             
             <button id="apply-heatmap" class="apply-btn">Apply</button>
+            
+            <div id="missing-data-warning" class="missing-data-warning hidden"></div>
             
             <!-- Features Introduction -->
             <div class="config-intro features-intro">
