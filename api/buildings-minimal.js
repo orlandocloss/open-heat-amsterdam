@@ -47,6 +47,7 @@ module.exports = async (req, res) => {
                     energyLabel: row.Energielabel,
                     buildingYear: parseInt(row.Energielabels_Bouwjaar),
                     busyRoad: parseInt(row.busy_roads) === 1,
+                    nearGreen: parseInt(row.near_green) === 1,
                     slopeFactor: isNaN(slopeVal) ? null : slopeVal,
                     southFactor: isNaN(southVal) ? null : southVal,
                     wwr: isNaN(wwrVal) ? null : wwrVal,
@@ -66,6 +67,7 @@ module.exports = async (req, res) => {
                     worstEnergyRank: getEnergyRank(firstAddr.energyLabel),
                     oldestYear: firstAddr.buildingYear,
                     onBusyRoad: firstAddr.busyRoad,
+                    nearGreen: firstAddr.nearGreen,
                     maxSlopeFactor: firstAddr.slopeFactor,
                     maxSouthFactor: firstAddr.southFactor,
                     maxWwr: firstAddr.wwr,
@@ -101,6 +103,10 @@ module.exports = async (req, res) => {
             
             if (parseInt(row.busy_roads) === 1) {
                 building.onBusyRoad = true;
+            }
+            
+            if (parseInt(row.near_green) === 1) {
+                building.nearGreen = true;
             }
             
             const slopeFactor = parseFloat(row.slope_factor);
