@@ -49,6 +49,7 @@ module.exports = async (req, res) => {
                     busyRoad: parseInt(row.busy_roads) === 1,
                     nearGreen: parseInt(row.near_green) === 1,
                     nearTrees: parseInt(row.near_trees) === 1,
+                    detached: parseInt(row.detached) === 1,
                     slopeFactor: isNaN(slopeVal) ? null : slopeVal,
                     southFactor: isNaN(southVal) ? null : southVal,
                     wwr: isNaN(wwrVal) ? null : wwrVal,
@@ -70,6 +71,7 @@ module.exports = async (req, res) => {
                     onBusyRoad: firstAddr.busyRoad,
                     nearGreen: firstAddr.nearGreen,
                     nearTrees: firstAddr.nearTrees,
+                    detached: firstAddr.detached,
                     maxSlopeFactor: firstAddr.slopeFactor,
                     maxSouthFactor: firstAddr.southFactor,
                     maxWwr: firstAddr.wwr,
@@ -113,6 +115,10 @@ module.exports = async (req, res) => {
             
             if (parseInt(row.near_trees) === 1) {
                 building.nearTrees = true;
+            }
+            
+            if (parseInt(row.detached) === 1) {
+                building.detached = true;
             }
             
             const slopeFactor = parseFloat(row.slope_factor);
