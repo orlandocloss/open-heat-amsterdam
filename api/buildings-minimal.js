@@ -40,11 +40,12 @@ module.exports = async (req, res) => {
             
             if (!buildingsMap.has(polygonKey)) {
                 // Store minimal data per building
+                const slopeVal = parseFloat(row.slope_factor);
                 const firstAddr = {
                     energyLabel: row.Energielabel,
                     buildingYear: parseInt(row.Energielabels_Bouwjaar),
                     busyRoad: parseInt(row.busy_roads) === 1,
-                    slopeFactor: parseFloat(row.slope_factor) || 0.5,
+                    slopeFactor: isNaN(slopeVal) ? null : slopeVal,
                     neighborhood: row.neighborhood || 'Unknown',
                     latitude: parseFloat(row.latitude),
                     longitude: parseFloat(row.longitude)
@@ -61,7 +62,11 @@ module.exports = async (req, res) => {
                     worstEnergyRank: getEnergyRank(firstAddr.energyLabel),
                     oldestYear: firstAddr.buildingYear,
                     onBusyRoad: firstAddr.busyRoad,
-                    maxSlopeFactor: firstAddr.slopeFactor
+                    maxSlopeFactor: firstAddr.slopeFactor,
+                    // Track missing data
+                    missingEnergy: !firstAddr.energyLabel || firstAddr.energyLabel === '',
+                    missingYear: isNaN(firstAddr.buildingYear),
+                    missingSlope: firstAddr.slopeFactor === null
                 });
             }
             
@@ -73,19 +78,29 @@ module.exports = async (req, res) => {
             if (energyRank < building.worstEnergyRank) {
                 building.worstEnergyRank = energyRank;
             }
+            // If any address has energy label, building is not missing energy
+            if (row.Energielabel && row.Energielabel !== '') {
+                building.missingEnergy = false;
+            }
             
             const year = parseInt(row.Energielabels_Bouwjaar);
-            if (!isNaN(year) && year < building.oldestYear) {
-                building.oldestYear = year;
+            if (!isNaN(year)) {
+                if (year < building.oldestYear || isNaN(building.oldestYear)) {
+                    building.oldestYear = year;
+                }
+                building.missingYear = false;
             }
             
             if (parseInt(row.busy_roads) === 1) {
                 building.onBusyRoad = true;
             }
             
-            const slopeFactor = parseFloat(row.slope_factor) || 0.5;
-            if (slopeFactor > building.maxSlopeFactor) {
-                building.maxSlopeFactor = slopeFactor;
+            const slopeFactor = parseFloat(row.slope_factor);
+            if (!isNaN(slopeFactor)) {
+                if (building.maxSlopeFactor === null || slopeFactor > building.maxSlopeFactor) {
+                    building.maxSlopeFactor = slopeFactor;
+                }
+                building.missingSlope = false;
             }
         });
         

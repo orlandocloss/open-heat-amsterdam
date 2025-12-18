@@ -337,15 +337,34 @@ function applyHeatmap() {
 
 function getHeatmapStyle(building) {
     const score = calculateBuildingScore(building);
+    
+    // Grey out buildings with missing data
+    if (score === null) {
+        return { fillColor: '#888', fillOpacity: 0.3, color: '#666', weight: 1 };
+    }
+    
     const color = getHeatColor(score);
     return { fillColor: color, fillOpacity: 0.7, color: darkenColor(color, 0.3), weight: 2 };
 }
 
+function hasMissingData(building) {
+    // Check if building is missing data for any weighted factor
+    if (state.energyWeight > 0 && building.missingEnergy) return true;
+    if (state.yearWeight > 0 && building.missingYear) return true;
+    if (state.slopeWeight > 0 && building.missingSlope) return true;
+    return false;
+}
+
 function calculateBuildingScore(building) {
+    // Return null for buildings with missing data (they'll be greyed out)
+    if (hasMissingData(building)) {
+        return null;
+    }
+    
     const energyScore = matchesEnergyCriteria(building) ? 1.0 : 0.0;
     const yearScore = matchesYearCriteria(building) ? 1.0 : 0.0;
     const busyRoadScore = building.onBusyRoad ? 1.0 : 0.0;
-    const slopeScore = building.maxSlopeFactor || 0.5; // Already 0-1 range
+    const slopeScore = building.maxSlopeFactor ?? 0.5; // Already 0-1 range
     
     return (energyScore * state.energyWeight) + 
            (yearScore * state.yearWeight) + 
@@ -458,13 +477,20 @@ function calculateNeighborhoodScores() {
         );
         
         if (buildings.length > 0) {
-            const buildingScores = buildings.map(({ building }) => calculateBuildingScore(building));
-            const meanScore = buildingScores.reduce((a, b) => a + b, 0) / buildingScores.length;
-            scores.set(feature.properties.Buurtcode, { 
-                score: meanScore, 
-                count: buildings.length, 
-                name: feature.properties.Buurtnaam 
-            });
+            // Filter out buildings with missing data (null scores)
+            const buildingScores = buildings
+                .map(({ building }) => calculateBuildingScore(building))
+                .filter(score => score !== null);
+            
+            if (buildingScores.length > 0) {
+                const meanScore = buildingScores.reduce((a, b) => a + b, 0) / buildingScores.length;
+                scores.set(feature.properties.Buurtcode, { 
+                    score: meanScore, 
+                    count: buildingScores.length,
+                    totalBuildings: buildings.length,
+                    name: feature.properties.Buurtnaam 
+                });
+            }
         }
     });
     
@@ -483,17 +509,22 @@ function bindRegionalPopup(feature, layer, scores) {
     const data = scores.get(feature.properties.Buurtcode);
     const name = feature.properties.Buurtnaam;
     
-    layer.bindPopup(data
-        ? `<div style="font-family: Courier New; padding: 10px;">
+    if (data) {
+        const missingCount = data.totalBuildings - data.count;
+        const missingText = missingCount > 0 
+            ? `<br><span style="color: #888;">Missing data:</span> <span style="color: #888;">${missingCount}</span>`
+            : '';
+        layer.bindPopup(`<div style="font-family: Courier New; padding: 10px;">
             <strong style="color: #FFD700;">${name}</strong><br>
             <span style="color: #666;">Score:</span> <strong style="color: #FF8C00;">${data.score.toFixed(3)}</strong><br>
-            <span style="color: #666;">Buildings:</span> <strong style="color: #FF8C00;">${data.count}</strong>
-           </div>`
-        : `<div style="font-family: Courier New; padding: 10px;">
+            <span style="color: #666;">Buildings:</span> <strong style="color: #FF8C00;">${data.count}</strong>${missingText}
+           </div>`);
+    } else {
+        layer.bindPopup(`<div style="font-family: Courier New; padding: 10px;">
             <strong style="color: #999;">${name}</strong><br>
             <span style="color: #666;">No data</span>
-           </div>`
-    );
+           </div>`);
+    }
 }
 
 // ============================================================================
