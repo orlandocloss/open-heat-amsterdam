@@ -55,7 +55,8 @@ module.exports = async (req, res) => {
                 energyLabel: row.Energielabel,
                 buildingYear: row.Energielabels_Bouwjaar,
                 busyRoad: parseInt(row.busy_roads) === 1,
-                slopeFactor: parseFloat(row.slope_factor) || 0.5,
+                slopeFactor: parseFloat(row.slope_factor) || null,
+                southFactor: parseFloat(row.south_factor) || null,
                 neighborhood: row.neighborhood || 'Unknown',
                 longitude: parseFloat(row.longitude),
                 latitude: parseFloat(row.latitude)

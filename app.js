@@ -51,12 +51,13 @@ const state = {
     heatmapEnabled: false,
     energyOperator: '<=',
     energyValue: 'C',
-    energyWeight: 0.25,
+    energyWeight: 0.20,
     yearOperator: '<=',
     yearValue: 1900,
-    yearWeight: 0.25,
-    busyRoadWeight: 0.25,
-    slopeWeight: 0.25,
+    yearWeight: 0.20,
+    busyRoadWeight: 0.20,
+    slopeWeight: 0.20,
+    southWeight: 0.20,
     
     // Regional overlay
     regionalHeatmapEnabled: false,
@@ -217,9 +218,11 @@ function renderBuildingInfo(building) {
     const content = document.getElementById('building-content');
     const worstLabel = getEnergyLabelFromRank(building.worstEnergyRank);
     
-    // Find highest slope factor from addresses
+    // Find highest slope and south factors from addresses
     const maxSlope = Math.max(...building.addresses.map(a => a.slopeFactor || 0));
+    const maxSouth = Math.max(...building.addresses.map(a => a.southFactor || 0));
     const slopeDisplay = maxSlope > 0 ? maxSlope.toFixed(2) : 'N/A';
+    const southDisplay = maxSouth > 0 ? maxSouth.toFixed(2) : 'N/A';
     
     let html = `
         <div class="building-info">
@@ -231,6 +234,7 @@ function renderBuildingInfo(building) {
                     <div class="summary-stat"><strong>Oldest</strong><span>${building.oldestYear}</span></div>
                     <div class="summary-stat"><strong>Busy Road</strong><span>${building.onBusyRoad ? 'Yes' : 'No'}</span></div>
                     <div class="summary-stat"><strong>Max Slope</strong><span>${slopeDisplay}</span></div>
+                    <div class="summary-stat"><strong>Max South</strong><span>${southDisplay}</span></div>
                 ` : ''}
             </div>
             <div class="addresses-list">
@@ -241,6 +245,7 @@ function renderBuildingInfo(building) {
                         <div class="address-detail"><span class="label">Building Year</span><span class="value">${addr.buildingYear || 'N/A'}</span></div>
                         <div class="address-detail"><span class="label">Busy Road</span><span class="value">${addr.busyRoad ? 'Yes' : 'No'}</span></div>
                         <div class="address-detail"><span class="label">Slope Factor</span><span class="value">${addr.slopeFactor ? addr.slopeFactor.toFixed(2) : 'N/A'}</span></div>
+                        <div class="address-detail"><span class="label">South Factor</span><span class="value">${addr.southFactor ? addr.southFactor.toFixed(2) : 'N/A'}</span></div>
                     </div>
                 `).join('')}
             </div>
@@ -272,6 +277,8 @@ function setupPanel() {
         busyRoadWeightValue: document.getElementById('busy-road-weight-value'),
         slopeWeight: document.getElementById('slope-weight'),
         slopeWeightValue: document.getElementById('slope-weight-value'),
+        southWeight: document.getElementById('south-weight'),
+        southWeightValue: document.getElementById('south-weight-value'),
         totalWeight: document.getElementById('total-weight'),
         warning: document.getElementById('weight-warning'),
         applyBtn: document.getElementById('apply-heatmap'),
@@ -287,13 +294,15 @@ function setupPanel() {
         state.yearWeight = parseFloat(els.yearWeight.value);
         state.busyRoadWeight = parseFloat(els.busyRoadWeight.value);
         state.slopeWeight = parseFloat(els.slopeWeight.value);
+        state.southWeight = parseFloat(els.southWeight.value);
         
         els.energyWeightValue.textContent = state.energyWeight.toFixed(2);
         els.yearWeightValue.textContent = state.yearWeight.toFixed(2);
         els.busyRoadWeightValue.textContent = state.busyRoadWeight.toFixed(2);
         els.slopeWeightValue.textContent = state.slopeWeight.toFixed(2);
+        els.southWeightValue.textContent = state.southWeight.toFixed(2);
         
-        const total = state.energyWeight + state.yearWeight + state.busyRoadWeight + state.slopeWeight;
+        const total = state.energyWeight + state.yearWeight + state.busyRoadWeight + state.slopeWeight + state.southWeight;
         els.totalWeight.textContent = total.toFixed(2);
         els.warning.classList.toggle('hidden', total <= 1.0);
         els.applyBtn.disabled = total > 1.0;
@@ -301,7 +310,7 @@ function setupPanel() {
     
     ['energyOperator', 'energyValue', 'yearOperator'].forEach(id => 
         els[id].addEventListener('change', updateWeights));
-    ['energyWeight', 'yearValue', 'yearWeight', 'busyRoadWeight', 'slopeWeight'].forEach(id => 
+    ['energyWeight', 'yearValue', 'yearWeight', 'busyRoadWeight', 'slopeWeight', 'southWeight'].forEach(id => 
         els[id].addEventListener('input', updateWeights));
     
     els.applyBtn.addEventListener('click', applyHeatmap);
@@ -358,6 +367,7 @@ function hasMissingData(building) {
     if (state.energyWeight > 0 && building.missingEnergy) return true;
     if (state.yearWeight > 0 && building.missingYear) return true;
     if (state.slopeWeight > 0 && building.missingSlope) return true;
+    if (state.southWeight > 0 && building.missingSouth) return true;
     return false;
 }
 
@@ -371,11 +381,13 @@ function calculateBuildingScore(building) {
     const yearScore = matchesYearCriteria(building) ? 1.0 : 0.0;
     const busyRoadScore = building.onBusyRoad ? 1.0 : 0.0;
     const slopeScore = building.maxSlopeFactor ?? 0.5; // Already 0-1 range
+    const southScore = building.maxSouthFactor ?? 0.5; // Already 0-1 range
     
     return (energyScore * state.energyWeight) + 
            (yearScore * state.yearWeight) + 
            (busyRoadScore * state.busyRoadWeight) +
-           (slopeScore * state.slopeWeight);
+           (slopeScore * state.slopeWeight) +
+           (southScore * state.southWeight);
 }
 
 function matchesEnergyCriteria(building) {

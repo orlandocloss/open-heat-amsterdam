@@ -41,11 +41,13 @@ module.exports = async (req, res) => {
             if (!buildingsMap.has(polygonKey)) {
                 // Store minimal data per building
                 const slopeVal = parseFloat(row.slope_factor);
+                const southVal = parseFloat(row.south_factor);
                 const firstAddr = {
                     energyLabel: row.Energielabel,
                     buildingYear: parseInt(row.Energielabels_Bouwjaar),
                     busyRoad: parseInt(row.busy_roads) === 1,
                     slopeFactor: isNaN(slopeVal) ? null : slopeVal,
+                    southFactor: isNaN(southVal) ? null : southVal,
                     neighborhood: row.neighborhood || 'Unknown',
                     latitude: parseFloat(row.latitude),
                     longitude: parseFloat(row.longitude)
@@ -63,10 +65,12 @@ module.exports = async (req, res) => {
                     oldestYear: firstAddr.buildingYear,
                     onBusyRoad: firstAddr.busyRoad,
                     maxSlopeFactor: firstAddr.slopeFactor,
+                    maxSouthFactor: firstAddr.southFactor,
                     // Track missing data
                     missingEnergy: !firstAddr.energyLabel || firstAddr.energyLabel === '',
                     missingYear: isNaN(firstAddr.buildingYear),
-                    missingSlope: firstAddr.slopeFactor === null
+                    missingSlope: firstAddr.slopeFactor === null,
+                    missingSouth: firstAddr.southFactor === null
                 });
             }
             
@@ -101,6 +105,14 @@ module.exports = async (req, res) => {
                     building.maxSlopeFactor = slopeFactor;
                 }
                 building.missingSlope = false;
+            }
+            
+            const southFactor = parseFloat(row.south_factor);
+            if (!isNaN(southFactor)) {
+                if (building.maxSouthFactor === null || southFactor > building.maxSouthFactor) {
+                    building.maxSouthFactor = southFactor;
+                }
+                building.missingSouth = false;
             }
         });
         
