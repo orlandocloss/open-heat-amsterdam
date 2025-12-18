@@ -145,6 +145,15 @@
                 <p class="help-text">Window to wall ratio (can exceed 1.0)</p>
             </div>
             
+            <!-- Orientation Filter -->
+            <div class="control-section">
+                <label class="control-label">
+                    Orientation <span id="orientation-weight-value">0.00</span>
+                </label>
+                <input type="range" id="orientation-weight" min="0" max="1" step="0.01" value="0.00" class="slider">
+                <p class="help-text">S, SE, SW, W facing = 1 (more sun exposure)</p>
+            </div>
+            
             <div class="weight-summary">
                 <strong>Total</strong> <span id="total-weight">1.00</span>
                 <span id="weight-warning" class="warning hidden">Must be ≤ 1.0</span>

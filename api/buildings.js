@@ -50,6 +50,7 @@ module.exports = async (req, res) => {
                 });
             }
             
+            const orientationVal = row.orientation;
             buildingsMap.get(polygonKey).addresses.push({
                 address: row.full_address,
                 energyLabel: row.Energielabel,
@@ -61,6 +62,7 @@ module.exports = async (req, res) => {
                 slopeFactor: parseFloat(row.slope_factor) || null,
                 southFactor: parseFloat(row.south_factor) || null,
                 wwr: parseFloat(row.wwr) || null,
+                orientation: orientationVal === '' ? null : parseInt(orientationVal) === 1,
                 neighborhood: row.neighborhood || 'Unknown',
                 longitude: parseFloat(row.longitude),
                 latitude: parseFloat(row.latitude)

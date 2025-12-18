@@ -62,6 +62,7 @@ const state = {
     slopeWeight: 0.10,
     southWeight: 0.10,
     wwrWeight: 0.10,
+    orientationWeight: 0.00,
     
     // Regional overlay
     regionalHeatmapEnabled: false,
@@ -229,9 +230,11 @@ function renderBuildingInfo(building) {
     const anyNearGreen = building.addresses.some(a => a.nearGreen);
     const anyNearTrees = building.addresses.some(a => a.nearTrees);
     const anyDetached = building.addresses.some(a => a.detached);
+    const anyGoodOrientation = building.addresses.some(a => a.orientation === true);
     const slopeDisplay = maxSlope > 0 ? maxSlope.toFixed(2) : 'N/A';
     const southDisplay = maxSouth > 0 ? maxSouth.toFixed(2) : 'N/A';
     const wwrDisplay = maxWwr > 0 ? maxWwr.toFixed(2) : 'N/A';
+    const orientationDisplay = building.addresses.some(a => a.orientation !== null) ? (anyGoodOrientation ? 'S/SE/SW/W' : 'N/NE/NW/E') : 'N/A';
     
     let html = `
         <div class="building-info">
@@ -248,6 +251,7 @@ function renderBuildingInfo(building) {
                     <div class="summary-stat"><strong>Max Slope</strong><span>${slopeDisplay}</span></div>
                     <div class="summary-stat"><strong>Max South</strong><span>${southDisplay}</span></div>
                     <div class="summary-stat"><strong>Max WWR</strong><span>${wwrDisplay}</span></div>
+                    <div class="summary-stat"><strong>Orientation</strong><span>${orientationDisplay}</span></div>
                 ` : ''}
             </div>
             <div class="addresses-list">
@@ -263,6 +267,7 @@ function renderBuildingInfo(building) {
                         <div class="address-detail"><span class="label">Slope Factor</span><span class="value">${addr.slopeFactor ? addr.slopeFactor.toFixed(2) : 'N/A'}</span></div>
                         <div class="address-detail"><span class="label">South Factor</span><span class="value">${addr.southFactor ? addr.southFactor.toFixed(2) : 'N/A'}</span></div>
                         <div class="address-detail"><span class="label">WWR</span><span class="value">${addr.wwr ? addr.wwr.toFixed(2) : 'N/A'}</span></div>
+                        <div class="address-detail"><span class="label">Orientation</span><span class="value">${addr.orientation === null ? 'N/A' : (addr.orientation ? 'S/SE/SW/W' : 'N/NE/NW/E')}</span></div>
                     </div>
                 `).join('')}
             </div>
@@ -304,6 +309,8 @@ function setupPanel() {
         southWeightValue: document.getElementById('south-weight-value'),
         wwrWeight: document.getElementById('wwr-weight'),
         wwrWeightValue: document.getElementById('wwr-weight-value'),
+        orientationWeight: document.getElementById('orientation-weight'),
+        orientationWeightValue: document.getElementById('orientation-weight-value'),
         totalWeight: document.getElementById('total-weight'),
         warning: document.getElementById('weight-warning'),
         applyBtn: document.getElementById('apply-heatmap'),
@@ -324,6 +331,7 @@ function setupPanel() {
         state.slopeWeight = parseFloat(els.slopeWeight.value);
         state.southWeight = parseFloat(els.southWeight.value);
         state.wwrWeight = parseFloat(els.wwrWeight.value);
+        state.orientationWeight = parseFloat(els.orientationWeight.value);
         
         els.energyWeightValue.textContent = state.energyWeight.toFixed(2);
         els.yearWeightValue.textContent = state.yearWeight.toFixed(2);
@@ -334,8 +342,9 @@ function setupPanel() {
         els.slopeWeightValue.textContent = state.slopeWeight.toFixed(2);
         els.southWeightValue.textContent = state.southWeight.toFixed(2);
         els.wwrWeightValue.textContent = state.wwrWeight.toFixed(2);
+        els.orientationWeightValue.textContent = state.orientationWeight.toFixed(2);
         
-        const total = state.energyWeight + state.yearWeight + state.busyRoadWeight + state.nearGreenWeight + state.nearTreesWeight + state.detachedWeight + state.slopeWeight + state.southWeight + state.wwrWeight;
+        const total = state.energyWeight + state.yearWeight + state.busyRoadWeight + state.nearGreenWeight + state.nearTreesWeight + state.detachedWeight + state.slopeWeight + state.southWeight + state.wwrWeight + state.orientationWeight;
         els.totalWeight.textContent = total.toFixed(2);
         els.warning.classList.toggle('hidden', total <= 1.0);
         els.applyBtn.disabled = total > 1.0;
@@ -343,7 +352,7 @@ function setupPanel() {
     
     ['energyOperator', 'energyValue', 'yearOperator'].forEach(id => 
         els[id].addEventListener('change', updateWeights));
-    ['energyWeight', 'yearValue', 'yearWeight', 'busyRoadWeight', 'nearGreenWeight', 'nearTreesWeight', 'detachedWeight', 'slopeWeight', 'southWeight', 'wwrWeight'].forEach(id => 
+    ['energyWeight', 'yearValue', 'yearWeight', 'busyRoadWeight', 'nearGreenWeight', 'nearTreesWeight', 'detachedWeight', 'slopeWeight', 'southWeight', 'wwrWeight', 'orientationWeight'].forEach(id => 
         els[id].addEventListener('input', updateWeights));
     
     els.applyBtn.addEventListener('click', applyHeatmap);
@@ -419,6 +428,7 @@ function hasMissingData(building) {
     if (state.slopeWeight > 0 && building.missingSlope) return true;
     if (state.southWeight > 0 && building.missingSouth) return true;
     if (state.wwrWeight > 0 && building.missingWwr) return true;
+    if (state.orientationWeight > 0 && building.missingOrientation) return true;
     return false;
 }
 
@@ -437,6 +447,7 @@ function calculateBuildingScore(building) {
     const slopeScore = building.maxSlopeFactor ?? 0.5;
     const southScore = building.maxSouthFactor ?? 0.5;
     const wwrScore = building.maxWwr ?? 0.5;
+    const orientationScore = building.hasGoodOrientation ? 1.0 : 0.0; // S, SE, SW, W facing
     
     return (energyScore * state.energyWeight) + 
            (yearScore * state.yearWeight) + 
@@ -446,7 +457,8 @@ function calculateBuildingScore(building) {
            (detachedScore * state.detachedWeight) +
            (slopeScore * state.slopeWeight) +
            (southScore * state.southWeight) +
-           (wwrScore * state.wwrWeight);
+           (wwrScore * state.wwrWeight) +
+           (orientationScore * state.orientationWeight);
 }
 
 function matchesEnergyCriteria(building) {

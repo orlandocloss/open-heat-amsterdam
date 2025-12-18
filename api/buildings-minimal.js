@@ -43,6 +43,7 @@ module.exports = async (req, res) => {
                 const slopeVal = parseFloat(row.slope_factor);
                 const southVal = parseFloat(row.south_factor);
                 const wwrVal = parseFloat(row.wwr);
+                const orientationVal = row.orientation;
                 const firstAddr = {
                     energyLabel: row.Energielabel,
                     buildingYear: parseInt(row.Energielabels_Bouwjaar),
@@ -53,6 +54,7 @@ module.exports = async (req, res) => {
                     slopeFactor: isNaN(slopeVal) ? null : slopeVal,
                     southFactor: isNaN(southVal) ? null : southVal,
                     wwr: isNaN(wwrVal) ? null : wwrVal,
+                    orientation: orientationVal === '' ? null : parseInt(orientationVal) === 1,
                     neighborhood: row.neighborhood || 'Unknown',
                     latitude: parseFloat(row.latitude),
                     longitude: parseFloat(row.longitude)
@@ -75,12 +77,14 @@ module.exports = async (req, res) => {
                     maxSlopeFactor: firstAddr.slopeFactor,
                     maxSouthFactor: firstAddr.southFactor,
                     maxWwr: firstAddr.wwr,
+                    hasGoodOrientation: firstAddr.orientation,
                     // Track missing data
                     missingEnergy: !firstAddr.energyLabel || firstAddr.energyLabel === '',
                     missingYear: isNaN(firstAddr.buildingYear),
                     missingSlope: firstAddr.slopeFactor === null,
                     missingSouth: firstAddr.southFactor === null,
-                    missingWwr: firstAddr.wwr === null
+                    missingWwr: firstAddr.wwr === null,
+                    missingOrientation: firstAddr.orientation === null
                 });
             }
             
@@ -143,6 +147,15 @@ module.exports = async (req, res) => {
                     building.maxWwr = wwr;
                 }
                 building.missingWwr = false;
+            }
+            
+            // If any address has good orientation (S, SE, SW, W), building has good orientation
+            const orientationVal = row.orientation;
+            if (orientationVal !== '' && parseInt(orientationVal) === 1) {
+                building.hasGoodOrientation = true;
+                building.missingOrientation = false;
+            } else if (orientationVal !== '' && building.missingOrientation) {
+                building.missingOrientation = false;
             }
         });
         
