@@ -217,6 +217,10 @@ function renderBuildingInfo(building) {
     const content = document.getElementById('building-content');
     const worstLabel = getEnergyLabelFromRank(building.worstEnergyRank);
     
+    // Find highest slope factor from addresses
+    const maxSlope = Math.max(...building.addresses.map(a => a.slopeFactor || 0));
+    const slopeDisplay = maxSlope > 0 ? maxSlope.toFixed(2) : 'N/A';
+    
     let html = `
         <div class="building-info">
             <div class="building-summary">
@@ -226,15 +230,17 @@ function renderBuildingInfo(building) {
                     <div class="summary-stat"><strong>Worst Label</strong><span>${worstLabel}</span></div>
                     <div class="summary-stat"><strong>Oldest</strong><span>${building.oldestYear}</span></div>
                     <div class="summary-stat"><strong>Busy Road</strong><span>${building.onBusyRoad ? 'Yes' : 'No'}</span></div>
+                    <div class="summary-stat"><strong>Max Slope</strong><span>${slopeDisplay}</span></div>
                 ` : ''}
             </div>
             <div class="addresses-list">
                 ${building.addresses.map(addr => `
                     <div class="address-card">
                         <div class="address-title">${addr.address}</div>
-                        <div class="address-detail"><span class="label">Energy Label</span><span class="value">${addr.energyLabel}</span></div>
-                        <div class="address-detail"><span class="label">Building Year</span><span class="value">${addr.buildingYear}</span></div>
+                        <div class="address-detail"><span class="label">Energy Label</span><span class="value">${addr.energyLabel || 'N/A'}</span></div>
+                        <div class="address-detail"><span class="label">Building Year</span><span class="value">${addr.buildingYear || 'N/A'}</span></div>
                         <div class="address-detail"><span class="label">Busy Road</span><span class="value">${addr.busyRoad ? 'Yes' : 'No'}</span></div>
+                        <div class="address-detail"><span class="label">Slope Factor</span><span class="value">${addr.slopeFactor ? addr.slopeFactor.toFixed(2) : 'N/A'}</span></div>
                     </div>
                 `).join('')}
             </div>
