@@ -94,10 +94,19 @@
             <!-- Near Green Filter -->
             <div class="control-section">
                 <label class="control-label">
-                    Near Green <span id="near-green-weight-value">0.15</span>
+                    Near Green <span id="near-green-weight-value">0.10</span>
                 </label>
-                <input type="range" id="near-green-weight" min="0" max="1" step="0.01" value="0.15" class="slider">
+                <input type="range" id="near-green-weight" min="0" max="1" step="0.01" value="0.10" class="slider">
                 <p class="help-text">Within 200m of green space (inverted: 0 = good)</p>
+            </div>
+            
+            <!-- Near Trees Filter -->
+            <div class="control-section">
+                <label class="control-label">
+                    Near Trees <span id="near-trees-weight-value">0.10</span>
+                </label>
+                <input type="range" id="near-trees-weight" min="0" max="1" step="0.01" value="0.10" class="slider">
+                <p class="help-text">Within 10m of public trees (inverted: 0 = good)</p>
             </div>
             
             <!-- Slope Factor Filter -->
@@ -112,9 +121,9 @@
             <!-- South Factor Filter -->
             <div class="control-section">
                 <label class="control-label">
-                    South Factor <span id="south-weight-value">0.15</span>
+                    South Factor <span id="south-weight-value">0.10</span>
                 </label>
-                <input type="range" id="south-weight" min="0" max="1" step="0.01" value="0.15" class="slider">
+                <input type="range" id="south-weight" min="0" max="1" step="0.01" value="0.10" class="slider">
                 <p class="help-text">South-facing: higher = more sun exposure (0-1)</p>
             </div>
             

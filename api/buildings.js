@@ -56,6 +56,7 @@ module.exports = async (req, res) => {
                 buildingYear: row.Energielabels_Bouwjaar,
                 busyRoad: parseInt(row.busy_roads) === 1,
                 nearGreen: parseInt(row.near_green) === 1,
+                nearTrees: parseInt(row.near_trees) === 1,
                 slopeFactor: parseFloat(row.slope_factor) || null,
                 southFactor: parseFloat(row.south_factor) || null,
                 wwr: parseFloat(row.wwr) || null,

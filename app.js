@@ -56,9 +56,10 @@ const state = {
     yearValue: 1900,
     yearWeight: 0.15,
     busyRoadWeight: 0.15,
-    nearGreenWeight: 0.15,
+    nearGreenWeight: 0.10,
+    nearTreesWeight: 0.10,
     slopeWeight: 0.15,
-    southWeight: 0.15,
+    southWeight: 0.10,
     wwrWeight: 0.10,
     
     // Regional overlay
@@ -225,6 +226,7 @@ function renderBuildingInfo(building) {
     const maxSouth = Math.max(...building.addresses.map(a => a.southFactor || 0));
     const maxWwr = Math.max(...building.addresses.map(a => a.wwr || 0));
     const anyNearGreen = building.addresses.some(a => a.nearGreen);
+    const anyNearTrees = building.addresses.some(a => a.nearTrees);
     const slopeDisplay = maxSlope > 0 ? maxSlope.toFixed(2) : 'N/A';
     const southDisplay = maxSouth > 0 ? maxSouth.toFixed(2) : 'N/A';
     const wwrDisplay = maxWwr > 0 ? maxWwr.toFixed(2) : 'N/A';
@@ -239,6 +241,7 @@ function renderBuildingInfo(building) {
                     <div class="summary-stat"><strong>Oldest</strong><span>${building.oldestYear}</span></div>
                     <div class="summary-stat"><strong>Busy Road</strong><span>${building.onBusyRoad ? 'Yes' : 'No'}</span></div>
                     <div class="summary-stat"><strong>Near Green</strong><span>${anyNearGreen ? 'Yes' : 'No'}</span></div>
+                    <div class="summary-stat"><strong>Near Trees</strong><span>${anyNearTrees ? 'Yes' : 'No'}</span></div>
                     <div class="summary-stat"><strong>Max Slope</strong><span>${slopeDisplay}</span></div>
                     <div class="summary-stat"><strong>Max South</strong><span>${southDisplay}</span></div>
                     <div class="summary-stat"><strong>Max WWR</strong><span>${wwrDisplay}</span></div>
@@ -252,6 +255,7 @@ function renderBuildingInfo(building) {
                         <div class="address-detail"><span class="label">Building Year</span><span class="value">${addr.buildingYear || 'N/A'}</span></div>
                         <div class="address-detail"><span class="label">Busy Road</span><span class="value">${addr.busyRoad ? 'Yes' : 'No'}</span></div>
                         <div class="address-detail"><span class="label">Near Green</span><span class="value">${addr.nearGreen ? 'Yes' : 'No'}</span></div>
+                        <div class="address-detail"><span class="label">Near Trees</span><span class="value">${addr.nearTrees ? 'Yes' : 'No'}</span></div>
                         <div class="address-detail"><span class="label">Slope Factor</span><span class="value">${addr.slopeFactor ? addr.slopeFactor.toFixed(2) : 'N/A'}</span></div>
                         <div class="address-detail"><span class="label">South Factor</span><span class="value">${addr.southFactor ? addr.southFactor.toFixed(2) : 'N/A'}</span></div>
                         <div class="address-detail"><span class="label">WWR</span><span class="value">${addr.wwr ? addr.wwr.toFixed(2) : 'N/A'}</span></div>
@@ -286,6 +290,8 @@ function setupPanel() {
         busyRoadWeightValue: document.getElementById('busy-road-weight-value'),
         nearGreenWeight: document.getElementById('near-green-weight'),
         nearGreenWeightValue: document.getElementById('near-green-weight-value'),
+        nearTreesWeight: document.getElementById('near-trees-weight'),
+        nearTreesWeightValue: document.getElementById('near-trees-weight-value'),
         slopeWeight: document.getElementById('slope-weight'),
         slopeWeightValue: document.getElementById('slope-weight-value'),
         southWeight: document.getElementById('south-weight'),
@@ -307,6 +313,7 @@ function setupPanel() {
         state.yearWeight = parseFloat(els.yearWeight.value);
         state.busyRoadWeight = parseFloat(els.busyRoadWeight.value);
         state.nearGreenWeight = parseFloat(els.nearGreenWeight.value);
+        state.nearTreesWeight = parseFloat(els.nearTreesWeight.value);
         state.slopeWeight = parseFloat(els.slopeWeight.value);
         state.southWeight = parseFloat(els.southWeight.value);
         state.wwrWeight = parseFloat(els.wwrWeight.value);
@@ -315,11 +322,12 @@ function setupPanel() {
         els.yearWeightValue.textContent = state.yearWeight.toFixed(2);
         els.busyRoadWeightValue.textContent = state.busyRoadWeight.toFixed(2);
         els.nearGreenWeightValue.textContent = state.nearGreenWeight.toFixed(2);
+        els.nearTreesWeightValue.textContent = state.nearTreesWeight.toFixed(2);
         els.slopeWeightValue.textContent = state.slopeWeight.toFixed(2);
         els.southWeightValue.textContent = state.southWeight.toFixed(2);
         els.wwrWeightValue.textContent = state.wwrWeight.toFixed(2);
         
-        const total = state.energyWeight + state.yearWeight + state.busyRoadWeight + state.nearGreenWeight + state.slopeWeight + state.southWeight + state.wwrWeight;
+        const total = state.energyWeight + state.yearWeight + state.busyRoadWeight + state.nearGreenWeight + state.nearTreesWeight + state.slopeWeight + state.southWeight + state.wwrWeight;
         els.totalWeight.textContent = total.toFixed(2);
         els.warning.classList.toggle('hidden', total <= 1.0);
         els.applyBtn.disabled = total > 1.0;
@@ -327,7 +335,7 @@ function setupPanel() {
     
     ['energyOperator', 'energyValue', 'yearOperator'].forEach(id => 
         els[id].addEventListener('change', updateWeights));
-    ['energyWeight', 'yearValue', 'yearWeight', 'busyRoadWeight', 'nearGreenWeight', 'slopeWeight', 'southWeight', 'wwrWeight'].forEach(id => 
+    ['energyWeight', 'yearValue', 'yearWeight', 'busyRoadWeight', 'nearGreenWeight', 'nearTreesWeight', 'slopeWeight', 'southWeight', 'wwrWeight'].forEach(id => 
         els[id].addEventListener('input', updateWeights));
     
     els.applyBtn.addEventListener('click', applyHeatmap);
@@ -416,14 +424,16 @@ function calculateBuildingScore(building) {
     const yearScore = matchesYearCriteria(building) ? 1.0 : 0.0;
     const busyRoadScore = building.onBusyRoad ? 1.0 : 0.0;
     const nearGreenScore = building.nearGreen ? 0.0 : 1.0; // Inverted: NOT near green = higher heat risk
-    const slopeScore = building.maxSlopeFactor ?? 0.5; // Already 0-1 range
-    const southScore = building.maxSouthFactor ?? 0.5; // Already 0-1 range
-    const wwrScore = building.maxWwr ?? 0.5; // Can exceed 1.0
+    const nearTreesScore = building.nearTrees ? 0.0 : 1.0; // Inverted: NOT near trees = higher heat risk
+    const slopeScore = building.maxSlopeFactor ?? 0.5;
+    const southScore = building.maxSouthFactor ?? 0.5;
+    const wwrScore = building.maxWwr ?? 0.5;
     
     return (energyScore * state.energyWeight) + 
            (yearScore * state.yearWeight) + 
            (busyRoadScore * state.busyRoadWeight) +
            (nearGreenScore * state.nearGreenWeight) +
+           (nearTreesScore * state.nearTreesWeight) +
            (slopeScore * state.slopeWeight) +
            (southScore * state.southWeight) +
            (wwrScore * state.wwrWeight);
