@@ -119,39 +119,43 @@
             </div>
             
             <!-- Slope Factor Filter -->
-            <div class="control-section">
+            <div class="control-section" id="slope-section">
                 <label class="control-label">
                     Slope Factor <span id="slope-weight-value">0.10</span>
                 </label>
                 <input type="range" id="slope-weight" min="0" max="1" step="0.01" value="0.10" class="slider">
                 <p class="help-text">Roof slope: higher = more heat exposure (0-1)</p>
+                <p class="missing-indicator">⚠ <span id="slope-missing-pct">0</span>% of buildings missing this data</p>
             </div>
             
             <!-- South Factor Filter -->
-            <div class="control-section">
+            <div class="control-section" id="south-section">
                 <label class="control-label">
                     South Factor <span id="south-weight-value">0.10</span>
                 </label>
                 <input type="range" id="south-weight" min="0" max="1" step="0.01" value="0.10" class="slider">
                 <p class="help-text">South-facing: higher = more sun exposure (0-1)</p>
+                <p class="missing-indicator">⚠ <span id="south-missing-pct">0</span>% of buildings missing this data</p>
             </div>
             
             <!-- WWR Filter -->
-            <div class="control-section">
+            <div class="control-section" id="wwr-section">
                 <label class="control-label">
                     Window-Wall Ratio <span id="wwr-weight-value">0.10</span>
                 </label>
                 <input type="range" id="wwr-weight" min="0" max="1" step="0.01" value="0.10" class="slider">
                 <p class="help-text">Window to wall ratio (can exceed 1.0)</p>
+                <p class="missing-indicator">⚠ <span id="wwr-missing-pct">0</span>% of buildings missing this data</p>
             </div>
             
             <!-- Orientation Filter -->
-            <div class="control-section">
+            <div class="control-section" id="orientation-section">
                 <label class="control-label">
                     Orientation <span id="orientation-weight-value">0.00</span>
                 </label>
                 <input type="range" id="orientation-weight" min="0" max="1" step="0.01" value="0.00" class="slider">
                 <p class="help-text">S, SE, SW, W facing = 1 (more sun exposure)</p>
+                <p class="missing-indicator">⚠ <span id="orientation-missing-pct">0</span>% of buildings missing this data</p>
             </div>
             
             <div class="weight-summary">

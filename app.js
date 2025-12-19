@@ -117,6 +117,7 @@ async function loadBuildings() {
         
         console.log(`Loaded ${state.buildingsData.length} buildings`);
         renderBuildings();
+        calculateMissingDataStats();
         
         const elapsed = Date.now() - startTime;
         setTimeout(() => {
@@ -130,6 +131,33 @@ async function loadBuildings() {
                 '<div style="color: #CD5C5C; text-align: center;"><h2>Error</h2><p>Please refresh</p></div>';
         }, CONFIG.MIN_LOAD_TIME);
     }
+}
+
+function calculateMissingDataStats() {
+    const total = state.buildingsData.length;
+    if (total === 0) return;
+    
+    // Count missing data for each characteristic
+    const stats = {
+        slope: state.buildingsData.filter(b => b.missingSlope).length,
+        south: state.buildingsData.filter(b => b.missingSouth).length,
+        wwr: state.buildingsData.filter(b => b.missingWwr).length,
+        orientation: state.buildingsData.filter(b => b.missingOrientation).length
+    };
+    
+    // Update UI with percentages
+    const updatePct = (id, count) => {
+        const pct = ((count / total) * 100).toFixed(0);
+        const el = document.getElementById(`${id}-missing-pct`);
+        if (el) el.textContent = pct;
+    };
+    
+    updatePct('slope', stats.slope);
+    updatePct('south', stats.south);
+    updatePct('wwr', stats.wwr);
+    updatePct('orientation', stats.orientation);
+    
+    console.log(`Missing data: slope=${stats.slope}, south=${stats.south}, wwr=${stats.wwr}, orientation=${stats.orientation}`);
 }
 
 // ============================================================================
@@ -224,17 +252,21 @@ function renderBuildingInfo(building) {
     const worstLabel = getEnergyLabelFromRank(building.worstEnergyRank);
     
     // Find highest values from addresses
-    const maxSlope = Math.max(...building.addresses.map(a => a.slopeFactor || 0));
-    const maxSouth = Math.max(...building.addresses.map(a => a.southFactor || 0));
-    const maxWwr = Math.max(...building.addresses.map(a => a.wwr || 0));
+    const slopeValues = building.addresses.map(a => a.slopeFactor).filter(v => v !== null && v !== undefined);
+    const southValues = building.addresses.map(a => a.southFactor).filter(v => v !== null && v !== undefined);
+    const wwrValues = building.addresses.map(a => a.wwr).filter(v => v !== null && v !== undefined);
+    const maxSlope = slopeValues.length > 0 ? Math.max(...slopeValues) : null;
+    const maxSouth = southValues.length > 0 ? Math.max(...southValues) : null;
+    const maxWwr = wwrValues.length > 0 ? Math.max(...wwrValues) : null;
     const anyNearGreen = building.addresses.some(a => a.nearGreen);
     const anyNearTrees = building.addresses.some(a => a.nearTrees);
     const anyDetached = building.addresses.some(a => a.detached);
     const anyGoodOrientation = building.addresses.some(a => a.orientation === true);
-    const slopeDisplay = maxSlope > 0 ? maxSlope.toFixed(2) : 'N/A';
-    const southDisplay = maxSouth > 0 ? maxSouth.toFixed(2) : 'N/A';
-    const wwrDisplay = maxWwr > 0 ? maxWwr.toFixed(2) : 'N/A';
-    const orientationDisplay = building.addresses.some(a => a.orientation !== null) ? (anyGoodOrientation ? 'S/SE/SW/W' : 'N/NE/NW/E') : 'N/A';
+    const slopeDisplay = maxSlope !== null ? maxSlope.toFixed(2) : 'N/A';
+    const southDisplay = maxSouth !== null ? maxSouth.toFixed(2) : 'N/A';
+    const wwrDisplay = maxWwr !== null ? maxWwr.toFixed(2) : 'N/A';
+    const hasOrientationData = building.addresses.some(a => a.orientation !== null);
+    const orientationDisplay = hasOrientationData ? (anyGoodOrientation ? 'South/West Facing' : 'Not South/West') : 'N/A';
     
     let html = `
         <div class="building-info">
@@ -245,8 +277,8 @@ function renderBuildingInfo(building) {
                     <div class="summary-stat"><strong>Worst Label</strong><span>${worstLabel}</span></div>
                     <div class="summary-stat"><strong>Oldest</strong><span>${building.oldestYear}</span></div>
                     <div class="summary-stat"><strong>Busy Road</strong><span>${building.onBusyRoad ? 'Yes' : 'No'}</span></div>
-                    <div class="summary-stat"><strong>Near Green</strong><span>${anyNearGreen ? 'Yes' : 'No'}</span></div>
-                    <div class="summary-stat"><strong>Near Trees</strong><span>${anyNearTrees ? 'Yes' : 'No'}</span></div>
+                    <div class="summary-stat"><strong>Near Green</strong><span>${anyNearGreen ? 'No' : 'Yes'}</span></div>
+                    <div class="summary-stat"><strong>Near Trees</strong><span>${anyNearTrees ? 'No' : 'Yes'}</span></div>
                     <div class="summary-stat"><strong>Detached</strong><span>${anyDetached ? 'Yes' : 'No'}</span></div>
                     <div class="summary-stat"><strong>Max Slope</strong><span>${slopeDisplay}</span></div>
                     <div class="summary-stat"><strong>Max South</strong><span>${southDisplay}</span></div>
@@ -261,13 +293,13 @@ function renderBuildingInfo(building) {
                         <div class="address-detail"><span class="label">Energy Label</span><span class="value">${addr.energyLabel || 'N/A'}</span></div>
                         <div class="address-detail"><span class="label">Building Year</span><span class="value">${addr.buildingYear || 'N/A'}</span></div>
                         <div class="address-detail"><span class="label">Busy Road</span><span class="value">${addr.busyRoad ? 'Yes' : 'No'}</span></div>
-                        <div class="address-detail"><span class="label">Near Green</span><span class="value">${addr.nearGreen ? 'Yes' : 'No'}</span></div>
-                        <div class="address-detail"><span class="label">Near Trees</span><span class="value">${addr.nearTrees ? 'Yes' : 'No'}</span></div>
+                        <div class="address-detail"><span class="label">Near Green</span><span class="value">${addr.nearGreen ? 'No' : 'Yes'}</span></div>
+                        <div class="address-detail"><span class="label">Near Trees</span><span class="value">${addr.nearTrees ? 'No' : 'Yes'}</span></div>
                         <div class="address-detail"><span class="label">Detached</span><span class="value">${addr.detached ? 'Yes' : 'No'}</span></div>
                         <div class="address-detail"><span class="label">Slope Factor</span><span class="value">${addr.slopeFactor ? addr.slopeFactor.toFixed(2) : 'N/A'}</span></div>
                         <div class="address-detail"><span class="label">South Factor</span><span class="value">${addr.southFactor ? addr.southFactor.toFixed(2) : 'N/A'}</span></div>
                         <div class="address-detail"><span class="label">WWR</span><span class="value">${addr.wwr ? addr.wwr.toFixed(2) : 'N/A'}</span></div>
-                        <div class="address-detail"><span class="label">Orientation</span><span class="value">${addr.orientation === null ? 'N/A' : (addr.orientation ? 'S/SE/SW/W' : 'N/NE/NW/E')}</span></div>
+                        <div class="address-detail"><span class="label">Orientation</span><span class="value">${addr.orientation === null ? 'N/A' : (addr.orientation ? 'South/West Facing' : 'Not South/West')}</span></div>
                     </div>
                 `).join('')}
             </div>
@@ -348,7 +380,20 @@ function setupPanel() {
         els.totalWeight.textContent = total.toFixed(2);
         els.warning.classList.toggle('hidden', total <= 1.0);
         els.applyBtn.disabled = total > 1.0;
+        
+        // Toggle missing data warnings based on weight > 0
+        toggleMissingWarning('slope-section', state.slopeWeight > 0);
+        toggleMissingWarning('south-section', state.southWeight > 0);
+        toggleMissingWarning('wwr-section', state.wwrWeight > 0);
+        toggleMissingWarning('orientation-section', state.orientationWeight > 0);
     };
+    
+    function toggleMissingWarning(sectionId, showWarning) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+            section.classList.toggle('has-missing-data', showWarning);
+        }
+    }
     
     ['energyOperator', 'energyValue', 'yearOperator'].forEach(id => 
         els[id].addEventListener('change', updateWeights));

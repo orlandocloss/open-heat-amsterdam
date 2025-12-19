@@ -408,6 +408,22 @@ body {
 
 .missing-data-warning.hidden { display: none; }
 
+/* Per-characteristic missing data indicator */
+.control-section.has-missing-data {
+    border-color: #FFA500;
+}
+
+.control-section .missing-indicator {
+    display: none;
+    font-size: 9px;
+    color: #FFA500;
+    margin-top: 3px;
+}
+
+.control-section.has-missing-data .missing-indicator {
+    display: block;
+}
+
 /* ============================================================================
    BUTTONS
    ============================================================================ */
