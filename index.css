@@ -144,10 +144,20 @@ body {
 }
 
 .cta-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 40px;
+    width: 100%;
+}
+
+.cta-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 15px;
-    margin-top: 40px;
+}
+
+.cta-button.primary-full {
     width: 100%;
 }
 
@@ -206,7 +216,7 @@ body {
 }
 
 @media (max-width: 768px) {
-    .cta-container {
+    .cta-row {
         grid-template-columns: 1fr;
     }
     

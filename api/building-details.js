@@ -37,11 +37,19 @@ module.exports = async (req, res) => {
         
         records.forEach(row => {
             if (row.building_polygon_wkt === polygon) {
+                const orientationVal = row.orientation;
                 addresses.push({
                     address: row.full_address,
                     energyLabel: row.Energielabel,
                     buildingYear: row.Energielabels_Bouwjaar,
                     busyRoad: parseInt(row.busy_roads) === 1,
+                    nearGreen: parseInt(row.near_green) === 1,
+                    nearTrees: parseInt(row.near_trees) === 1,
+                    detached: parseInt(row.detached) === 1,
+                    slopeFactor: row.slope_factor === '' ? null : parseFloat(row.slope_factor),
+                    southFactor: row.south_factor === '' ? null : parseFloat(row.south_factor),
+                    wwr: row.wwr === '' ? null : parseFloat(row.wwr),
+                    orientation: orientationVal === '' ? null : parseInt(orientationVal) === 1,
                     neighborhood: row.neighborhood || 'Unknown'
                 });
             }

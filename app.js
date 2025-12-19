@@ -61,7 +61,7 @@ const state = {
     detachedWeight: 0.10,
     slopeWeight: 0.10,
     southWeight: 0.10,
-    wwrWeight: 0.10,
+    wwrWeight: 0.00,
     orientationWeight: 0.00,
     
     // Regional overlay
@@ -427,6 +427,15 @@ function showBuildingView() {
 function applyHeatmap() {
     state.heatmapEnabled = true;
     
+    // Check which characteristics have missing data and are weighted
+    const missingCharacteristics = getMissingDataCharacteristics();
+    
+    // Show popup if there are missing data issues
+    if (missingCharacteristics.length > 0) {
+        const message = `The following characteristics have missing data for some buildings:\n\n• ${missingCharacteristics.join('\n• ')}\n\nBuildings with missing data will be greyed out.`;
+        alert(message);
+    }
+    
     // Count buildings with missing data
     let missingCount = 0;
     state.buildingLayers.forEach(({ building, layer }) => {
@@ -452,6 +461,41 @@ function applyHeatmap() {
         state.regionalHeatmapLayer = null;
         createRegionalHeatmap();
     }
+}
+
+function getMissingDataCharacteristics() {
+    const total = state.buildingsData.length;
+    const characteristics = [];
+    
+    if (state.slopeWeight > 0) {
+        const missing = state.buildingsData.filter(b => b.missingSlope).length;
+        if (missing > 0) {
+            characteristics.push(`Slope Factor: ${((missing/total)*100).toFixed(1)}% missing`);
+        }
+    }
+    
+    if (state.southWeight > 0) {
+        const missing = state.buildingsData.filter(b => b.missingSouth).length;
+        if (missing > 0) {
+            characteristics.push(`South Factor: ${((missing/total)*100).toFixed(1)}% missing`);
+        }
+    }
+    
+    if (state.wwrWeight > 0) {
+        const missing = state.buildingsData.filter(b => b.missingWwr).length;
+        if (missing > 0) {
+            characteristics.push(`Window-Wall Ratio: ${((missing/total)*100).toFixed(1)}% missing`);
+        }
+    }
+    
+    if (state.orientationWeight > 0) {
+        const missing = state.buildingsData.filter(b => b.missingOrientation).length;
+        if (missing > 0) {
+            characteristics.push(`Orientation: ${((missing/total)*100).toFixed(1)}% missing`);
+        }
+    }
+    
+    return characteristics;
 }
 
 function getHeatmapStyle(building) {
